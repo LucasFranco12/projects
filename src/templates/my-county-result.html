@@ -1,0 +1,86 @@
+<!-- /templates/my-result.html-->
+
+<html>
+    <head>
+        <title>Flask result table using nested for loops</title>
+    </head>
+
+    <!-- Add some style to table (OPTIONAL) -->
+    <style type="text/css">
+
+    th:tr{
+        color: blue;
+    }
+    tr:nth-of-type(2n){
+        border: 1px solid black;
+        background-color: rgba(150, 150, 150, 0.5);
+    }
+
+    td{
+        padding: 8px 8px;
+        border: 1px solid black;
+    }
+
+	.row{
+		display:flex;
+		margin-left:-5px;
+		margin-right: -5px;
+	}
+	
+	.column{
+		flex:50%;
+		padding:5px;
+	}
+
+    </style>
+
+    <body>
+	<div class="row">
+		<div class="column">
+		<h3 style="text-align:center;">2015</h3>
+        <table>
+            <!-- Display Column Headers -->
+            <thead>
+                <tr>
+                {%for head in heads%}
+                    <th>{{head}}</th>
+                {%endfor%}
+                </tr>
+            </thead>
+            <!-- Display all municipality data in county in 2015 -->
+            <tbody>
+			{%for row in oldinstallations%}
+                <tr>
+                {%for col in row%}
+                    <td>{{col}}</td>
+                {%endfor%}
+                </tr>
+			{%endfor%}
+            </tbody>
+        </table>
+		</div>
+		<div class="column">
+		<h3 style="text-align:center;">2020</h3>
+        <table>
+            <!-- Display column headers -->
+            <thead>
+                <tr>
+                {%for head in heads%}
+                    <th>{{head}}</th>
+                {%endfor%}
+                </tr>
+            </thead>
+            <!-- Display all municipality data in county in 2020 -->
+           	<tbody>
+			{%for row in currentinstallations%}
+                <tr>
+                {%for col in row%}
+                    <td>{{col}}</td>
+                {%endfor%}
+                </tr>
+			{%endfor%}
+            </tbody>
+        </table>
+		</div>
+    </body>
+</html>
