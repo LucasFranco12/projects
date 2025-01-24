@@ -1,0 +1,15 @@
+
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>AI YouTube Quiz</h1>
+    <form action="{{ url_for('process_url') }}" method="POST">
+        <input type="text" name="youtube_url" placeholder="Enter YouTube URL" required>
+        <br>
+        <button type="submit">Generate Quiz</button>
+    </form>
+</div>
+{% endblock %}

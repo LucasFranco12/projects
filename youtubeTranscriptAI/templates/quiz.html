@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Quiz{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Quiz</h1>
+    {% for question in quiz.questions %}
+    <div class="question">
+        <h3>{{ loop.index }}. {{ question }}</h3>
+        <div class="options">
+            {% for option in quiz.options[loop.index0] %}
+            <div class="option" 
+                 data-letter="{{ ['A', 'B', 'C', 'D'][loop.index0] }}"
+                 onclick="selectOption(this)">
+                {{ ['A', 'B', 'C', 'D'][loop.index0] }}. {{ option }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    <button onclick="checkAnswers()">Check Answers</button>
+    <div id="score-container" style="display: none; margin-top: 20px;"></div>
+</div>
+
+<div id="quiz-data" data-answers="{{ quiz.answers|tojson }}"></div>
+
+<style>
+    .question {
+        text-align: left;
+        margin-bottom: 30px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 20px;
+        border-radius: 8px;
+    }
+    
+    .options {
+        margin-top: 10px;
+    }
+    
+    .option {
+        padding: 10px 15px;
+        margin: 5px 0;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    
+    .option:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .option.selected {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .option.correct {
+        background: rgba(0, 255, 0, 0.2);
+    }
+    
+    .option.incorrect {
+        background: rgba(255, 0, 0, 0.2);
+    }
+
+    #score-container {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-top: 20px;
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 5px;
+    }
+</style>
+
+<script>
+let selectedOptions = {};
+
+function selectOption(element) {
+    const questionIndex = element.closest('.question').querySelector('h3').textContent.split('.')[0] - 1;
+    const letter = element.getAttribute('data-letter');
+    selectedOptions[questionIndex] = letter;
+    
+    // Remove selected class from all options in this question
+    const options = element.closest('.options').querySelectorAll('.option');
+    options.forEach(opt => opt.classList.remove('selected'));
+    
+    // Add selected class to clicked option
+    element.classList.add('selected');
+}
+
+function checkAnswers() {
+    let score = 0;
+    const questions = document.querySelectorAll('.question');
+    const answers = JSON.parse(document.getElementById('quiz-data').getAttribute('data-answers'));
+
+    questions.forEach((questionDiv, index) => {
+        const selectedOption = selectedOptions[index];
+        const correctAnswer = answers[index];
+        
+        questionDiv.querySelectorAll('.option').forEach(option => {
+            const optionLetter = option.getAttribute('data-letter');
+            
+            if (selectedOption === optionLetter) {
+                if (selectedOption === correctAnswer) {
+                    option.classList.add('correct');
+                    score++;
+                } else {
+                    option.classList.add('incorrect');
+                }
+            } else if (optionLetter === correctAnswer) {
+                option.classList.add('correct');
+            }
+        });
+    });
+
+    const scoreContainer = document.getElementById('score-container');
+    scoreContainer.textContent = `Your Score: ${score} out of ${questions.length}`;
+    scoreContainer.style.display = 'block';
+}
+</script>
+{% endblock %}

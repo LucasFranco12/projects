@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Quiz Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        button:hover {
+            background-color: #45a049;
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .options {
+            margin-top: 10px;
+        }
+        
+        .option {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .option:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .option.selected {
+            background-color: #e3f2fd;
+            border-color: #2196F3;
+        }
+        
+        .option.correct {
+            background-color: #c8e6c9;
+            border-color: #4CAF50;
+        }
+        
+        .option.incorrect {
+            background-color: #ffcdd2;
+            border-color: #f44336;
+        }
+        
+        .explanation {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #4CAF50;
+            display: none;
+        }
+        
+        .score {
+            text-align: center;
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #e3f2fd;
+            border-radius: 4px;
+        }
+        
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>YouTube Quiz Generator</h1>
+        <div class="form-group">
+            <label for="url">Enter YouTube URL:</label>
+            <input type="text" id="url" name="url" placeholder="https://www.youtube.com/watch?v=...">
+        </div>
+        <button onclick="generateQuiz()" id="generate-btn">Generate Quiz</button>
+        <div id="loading">Generating quiz... This may take a few minutes.</div>
+        <div id="error" class="error"></div>
+        <div id="quiz-container">
+            <div id="questions-container"></div>
+            <button onclick="checkAnswers()" id="check-answers-btn" style="display: none;">Check Answers</button>
+            <div id="score-container" class="score" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let quizData = null;
+        
+        async function generateQuiz() {
+            const urlInput = document.getElementById('url');
+            const generateBtn = document.getElementById('generate-btn');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const checkAnswersBtn = document.getElementById('check-answers-btn');
+            const questionsContainer = document.getElementById('questions-container');
+            const scoreContainer = document.getElementById('score-container');
+            
+            // Reset previous results
+            error.textContent = '';
+            questionsContainer.innerHTML = '';
+            scoreContainer.style.display = 'none';
+            checkAnswersBtn.style.display = 'none';
+            
+            if (!urlInput.value) {
+                error.textContent = 'Please enter a YouTube URL';
+                return;
+            }
+            
+            generateBtn.disabled = true;
+            loading.style.display = 'block';
+            
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `url=${encodeURIComponent(urlInput.value)}`
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    error.textContent = data.error;
+                } else {
+                    quizData = data.quiz;
+                    displayQuiz(quizData);
+                    checkAnswersBtn.style.display = 'block';
+                }
+            } catch (err) {
+                error.textContent = 'An error occurred while generating the quiz. Please try again.';
+            } finally {
+                generateBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayQuiz(quiz) {
+            const questionsContainer = document.getElementById('questions-container');
+            questionsContainer.innerHTML = '';
+            
+            quiz.questions.forEach((question, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.innerHTML = `
+                    <div><strong>${index + 1}. ${question.question}</strong></div>
+                    <div class="options">
+                        ${question.options.map(option => `
+                            <div class="option" 
+                                 onclick="selectOption(${index}, '${option.letter}')"
+                                 data-question="${index}"
+                                 data-option="${option.letter}">
+                                ${option.letter}. ${option.text}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation-${index}"></div>
+                `;
+                questionsContainer.appendChild(questionDiv);
+            });
+        }
+        
+        function selectOption(questionIndex, optionLetter) {
+            const questionDiv = document.querySelectorAll('.question')[questionIndex];
+            const options = questionDiv.querySelectorAll('.option');
+            
+            options.forEach(option => {
+                option.classList.remove('selected');
+                if (option.dataset.option === optionLetter) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+        
+        function checkAnswers() {
+            const questions = document.querySelectorAll('.question');
+            let score = 0;
+            
+            questions.forEach((questionDiv, index) => {
+                const selectedOption = questionDiv.querySelector('.option.selected');
+                const explanation = document.getElementById(`explanation-${index}`);
+                const correctAnswer = quizData.answers[index];
+                
+                // Reset previous results
+                questionDiv.querySelectorAll('.option').forEach(option => {
+                    option.classList.remove('correct', 'incorrect');
+                });
+                
+                if (selectedOption) {
+                    const selectedLetter = selectedOption.dataset.option;
+                    
+                    if (selectedLetter === correctAnswer.correct_option) {
+                        score++;
+                        selectedOption.classList.add('correct');
+                    } else {
+                        selectedOption.classList.add('incorrect');
+                        questionDiv.querySelector(`[data-option="${correctAnswer.correct_option}"]`).classList.add('correct');
+                    }
+                } else {
+                    // No selection made, just show correct answer
+                    questionDiv.querySelector(`[data-option="${correctAnswer.correct_option}"]`).classList.add('correct');
+                }
+                
+                // Show explanation
+                explanation.textContent = correctAnswer.explanation;
+                explanation.style.display = 'block';
+            });
+            
+            // Display score
+            const scoreContainer = document.getElementById('score-container');
+            scoreContainer.textContent = `Your Score: ${score} out of ${questions.length}`;
+            scoreContainer.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
