@@ -1,0 +1,11 @@
+<launch>
+    <!-- Launch the OpenManipulator GUI -->
+    <node pkg="open_manipulator_control_gui" type="open_manipulator_control_gui" name="open_manipulator_gui" output="screen" />
+
+
+
+    <!-- Launch the chess piece detector with correct PYTHONPATH -->
+    <node pkg="chessML" type="chessPieceDetectorENGINETEST.py" name="chess_piece_detector" output="screen">
+        <env name="PYTHONPATH" value="$(find chessML)/src:$(env PYTHONPATH)" />
+    </node>
+</launch>
